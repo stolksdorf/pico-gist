@@ -1,0 +1,30 @@
+{
+  "name": "pico-gist",
+  "version": "1.0.0",
+  "description": "An incredibly tiny library for using github gists as a datastore",
+  "main": "index.js",
+  "dependencies": {
+    "superagent": "^4.1.0"
+  },
+  "devDependencies": {
+    "pico-check": "^1.2.1",
+    "pico-conf": "^1.5.1"
+  },
+  "scripts": {
+    "test": "pico-check",
+    "test:dev": "pico-check -w -b"
+  },
+  "pico-check":{
+    "timeout" : 2000
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stolksdorf/pico-gist.git"
+  },
+  "author": "stolksdorf",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/stolksdorf/pico-gist/issues"
+  },
+  "homepage": "https://github.com/stolksdorf/pico-gist#readme"
+}
