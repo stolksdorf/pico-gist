@@ -7,6 +7,22 @@ const Gist = PicoGist(config.get('gist_token'));
 const testGistId = config.get('test_gist_id');
 
 
+test.only('temp', async (t)=>{
+	console.log(config.get('gist_token'));
+
+
+	const res = await Gist.fetch();
+
+
+
+
+
+	console.log(res);
+
+})
+
+
+
 test('get', async (t)=>{
 	const gist = await Gist.get(testGistId);
 	t.is(gist.id, testGistId);
@@ -38,6 +54,11 @@ test('update test gist', async (t)=>{
 
 test('create and remove', async (t)=>{
 
+
+
+});
+
+test.group('.append()', (test)=>{
 
 
 })
