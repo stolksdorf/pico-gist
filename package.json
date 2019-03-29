@@ -7,15 +7,15 @@
     "superagent": "^4.1.0"
   },
   "devDependencies": {
-    "pico-check": "^1.2.1",
+    "pico-check": "^1.2.2",
     "pico-conf": "^1.5.1"
   },
   "scripts": {
     "test": "pico-check",
     "test:dev": "pico-check -w -b"
   },
-  "pico-check":{
-    "timeout" : 2000
+  "pico-check": {
+    "timeout": 2000
   },
   "repository": {
     "type": "git",

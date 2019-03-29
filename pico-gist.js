@@ -2,47 +2,52 @@ const request = require('superagent');
 
 const map    = (obj,fn)=>Object.keys(obj).map((key, idx)=>fn(obj[key], key, idx));
 const reduce = (obj,fn,init)=>Object.keys(obj).reduce((acc, key, idx)=>{return fn(acc, obj[key], key, idx); }, init);
+const types = require('./types.js');
 
-module.exports = (token, baseOptions=null)=>{
-	let autofields = {};
+const DefaultOptions = {
+	types,
+	fields      : {},
+	public      : true,
+	description : undefined,
+};
+
+module.exports = (token, baseOptions)=>{
+	const getOpts = (override)=>{
+		if(!override) return Gist.opts;
+		return utils.mergeOptions(Gist.opts, override);
+	};
 
 	const utils = {
-		mergeOptions : (current, newer)=>{
-			//TODO:
-			const defaultOptions = {
-				exts        : null, //todo: add json, tsv, csv,
-				fields      : null,
-				public      : true,
-				description : null,
-				filter      : null,
-			};
+		autofields : {},
+		mergeOptions : (current={}, newer={})=>{
+			return Object.assign({}, current, newer, {
+				types : Object.assign({}, current.types, newer.types),
+				fields : Object.assign({}, current.fields, newer.fields),
+			});
 		},
-		getExt : (name, value, opts)=>{
-			if(opts.fields[name]) return opts.fields[name];
-			if(autofields[name]) return autofields[name];
-			if(typeof value === 'object') return 'json';
-			return 'txt';
+		getExt : (name, value, fields={})=>{
+			return fields[name] || utils.autofields[name]
+				|| (typeof value === 'object' ? 'json' : 'txt');
 		},
-
-		gist2Object : (gist, opts={exts:{}})=>{
+		gist2Object : (gist, types={})=>{
 			const obj = Object.values(gist.files).reduce((acc, file)=>{
-				//if(file.truncated){}
+				//FIXME: if(file.truncated){}
 				const [field, ext] = file.filename.split('.');
-				autofields[field] = ext;
-				acc[field] = opts.exts[ext]
-					? opts.exts[ext].to(file.contents)
-					: file.contents
+				utils.autofields[field] = ext;
+				acc[field] = types[ext]
+					? types[ext].from(file.content)
+					: file.content
 				return acc;
 			}, {});
 			obj[Gist.id] = gist.id;
 			obj[Gist.description] = gist.description;
 			return obj;
 		},
-		object2Files : (obj, opts={exts:{}})=>{
+		object2Files : (obj, fields={}, types={})=>{
 			return reduce(obj, (acc, value, field)=>{
-				const ext = getExt(field, value, opts);
-				const content = opts.exts[ext]
-					? opts.exts[ext].from(value)
+				const ext = utils.getExt(field, value, fields);
+				const content = types[ext]
+					? types[ext].to(value)
 					: value;
 				acc[`${field}.${ext}`] = { content };
 				return acc;
@@ -50,14 +55,14 @@ module.exports = (token, baseOptions=null)=>{
 		},
 	};
 
-
 	const Gist = {
 		id          : Symbol(),
 		description : Symbol(),
 		utils,
+		opts : utils.mergeOptions(DefaultOptions, baseOptions),
 
-
-
+		getId : (val)=>val[Gist.id] || val,
+		getDescription : (val)=>val[Gist.description] || val,
 
 		request : async (verb, path, data={})=>{
 			return request
@@ -68,53 +73,46 @@ module.exports = (token, baseOptions=null)=>{
 				.then((response)=>response.body)
 		},
 
-
-
-
-		fetch : async (username=false, _opts={})=>{
-			const opts = mergeOptions(baseOptions, _opts);
+		fetch : async (username=false)=>{
 			return Gist.request('get', username ? `/users/${username}/gists` : '/gists')
-				.then((gists)=>(opts.filter) ? gists.filter(opts.filter) : gists) //Maybe remove?
 				.then((gists)=>gists.map((gist)=>{
 					const {id, description} = gist;
 					return {id, description};
 				}))
 		},
-		get : async (id)=>{
-			if(id[Gist.id]){obj=id; id = id[Gist.id] }
-			return Gist.request('get', `/gists/${id}`)
-				.then(utils.gist2Object)
+		get : async (id, _opts)=>{
+			const opts = getOpts(_opts);
+			return Gist.request('get', `/gists/${Gist.getId(id)}`)
+				.then((gist)=>Gist.utils.gist2Object(gist, opts.types));
 		},
-		create : async (obj, _opts={})=>{
-
-			// {
-			// 	files : object2Files(obj, )
-			// }
-
-
+		create : async (obj, _opts)=>{
+			const opts = getOpts(_opts);
 			return Gist.request('post', `/gists`, {
-				public,
-				...Gist.object2Gist(obj)
-			})
-			.then(utils.gist2Object)
+					public : opts.public,
+					description : opts.description,
+					files       : Gist.utils.object2Files(obj, opts.fields, opts.types)
+				})
+				.then((gist)=>Gist.utils.gist2Object(gist, opts.types));
 		},
-		update : async (id, obj, _opts={})=>{
-			if(id[Gist.id]){obj=id; id = id[Gist.id] }
-			return Gist.request('patch', `/gists/${id}`, Gist.object2Gist(obj))
-				.then(utils.gist2Object)
+		update : async (id, obj, _opts)=>{
+			const opts = getOpts(_opts);
+			return Gist.request('patch', `/gists/${Gist.getId(id)}`, {
+					description : opts.description,
+					files       : Gist.utils.object2Files(obj, opts.fields, opts.types)
+				})
+				.then((gist)=>Gist.utils.gist2Object(gist, opts.types));
 		},
 		remove : async (id)=>{
-			if(id[Gist.id]){obj=id; id = id[Gist.id] }
-			return Gist.request('delete', `/gists/${id}`)
+			return Gist.request('delete', `/gists/${Gist.getId(id)}`)
 		},
 		append : async (id, obj)=>{
-			let temp = await Gist.get(id);
+			let currValue = await Gist.get(id);
 			map(obj, (val, key)=>{
-				obj[key] = (typeof temp[key] === 'object')
-					? Object.assign(temp[key], val);
-					: temp[key] + val;
+				currValue[key] = (typeof currValue[key] === 'object')
+					? Object.assign(currValue[key], val)
+					: currValue[key] + val;
 			});
-			return await Gist.update(id, temp);
+			return await Gist.update(id, currValue);
 		}
 	};
 	return Gist;

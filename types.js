@@ -22,19 +22,16 @@ const xsv = (delimiter)=>{
 }
 
 module.exports = {
-
-	//TODO: add back in json
 	tsv: xsv('\t'),
 	csv: xsv(','),
-
 	json: {
-		to   : (str)=>JSON.parse(str),
-		from : (data)=>JSON.stringify(data, null, '  ')
+		from : (str)=>JSON.parse(str),
+		to   : (data)=>JSON.stringify(data, null, '  ')
 	},
-	txt : {
-		to   : (str)=>str,
-		from : (data)=>data
-	},
+	// txt : {
+	// 	to   : (str)=>str,
+	// 	from : (data)=>data
+	// },
 
 
 

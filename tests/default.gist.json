@@ -1,0 +1,8 @@
+{
+	"description": "[pico-gist] Testing Gist",
+	"files" : {
+		"body.md":{
+			"content": "# hello"
+		}
+	}
+}
