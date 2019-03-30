@@ -1,7 +1,9 @@
 const request = require('superagent');
 
-const map    = (obj,fn)=>Object.keys(obj).map((key, idx)=>fn(obj[key], key, idx));
-const reduce = (obj,fn,init)=>Object.keys(obj).reduce((acc, key, idx)=>{return fn(acc, obj[key], key, idx); }, init);
+const map    = (obj,fn)=>Object.keys(obj).map((key)=>fn(obj[key],key));
+const reduce = (obj,fn,init)=>Object.keys(obj).reduce((acc,key)=>{return fn(acc,obj[key],key); }, init);
+const construct = (obj,fn)=>Object.keys(obj).reduce((acc,key)=>{const [a,b]=fn(obj[key],key);acc[a]=b;return acc;}, {});
+
 const types = require('./types.js');
 
 const DefaultOptions = {
@@ -117,12 +119,7 @@ module.exports = (token, baseOptions)=>{
 				return a + b;
 			};
 			const gist = await Gist.get(id, opts);
-			return await Gist.update(id,
-				reduce(obj, (acc, val, key)=>{
-					acc[key] = merge(gist[key], val);
-					return acc;
-				}, {})
-			);
+			return await Gist.update(id, construct(obj, (val, key)=>[key, merge(gist[key], val)]));
 		}
 	};
 	return Gist;
