@@ -14,7 +14,7 @@ const ResetTestGist = async ()=>{
 	}, {});
 	await Gist.request('patch', `/gists/${testGistId}`, {
 		description : defaultGist.description,
-		files       : Object.assign(empty, defaultGist.files)
+		files : Object.assign(empty, defaultGist.files)
 	});
 };
 
@@ -29,7 +29,10 @@ test.group('get', (test)=>{
 		t.is(gist[Gist.id], testGistId);
 		t.is(Gist.getId(gist), testGistId);
 
-		t.is(gist.body, defaultGist.files['body.md'].content);
+		t.is(gist.post, defaultGist.files['post.md'].content);
+		t.type(gist.meta, 'object');
+		t.is(gist.meta.title, 'hello world.');
+		t.is(gist.meta.shared, true);
 	});
 	test('can get with gist object', async (t)=>{
 		gist = await Gist.get(gist);
@@ -39,8 +42,8 @@ test.group('get', (test)=>{
 
 	test('autofields work', async (t)=>{
 		if(!gist) gist = await Gist.get(testGistId);
-		t.is(Gist.utils.autofields.body, 'md');
-		t.is(Gist.utils.getExt('body'), 'md');
+		t.is(Gist.utils.autofields.post, 'md');
+		t.is(Gist.utils.getExt('post'), 'md');
 	});
 });
 
@@ -51,12 +54,12 @@ test.group('fetch', (test)=>{
 		if(!gists) gists = await Gist.fetch();
 		t.type(gists, 'array');
 		t.type(gists[0].id, 'string');
-		t.type(gists[0].description, 'string');
+		t.type(gists[0].desc, 'string');
 	});
 
 	test('should find test gist', async (t)=>{
 		if(!gists) gists = await Gist.fetch();
-		const gist = gists.find((gist)=>gist.description == defaultGist.description);
+		const gist = gists.find((gist)=>gist.desc == defaultGist.description);
 		t.ok(gist);
 	});
 });
@@ -67,11 +70,19 @@ test.group('update', (test)=>{
 	test('update test gist', async (t)=>{
 		const updatedGist = await Gist.update(testGistId, {foo : 'bar'});
 		t.is(updatedGist.foo, 'bar');
+		t.is(updatedGist.post, defaultGist.files['post.md'].content);
 	});
 
+	// test('can mutate and update a gist', async (t)=>{
+	// 	let gist = await Gist.get(testGistId);
+	// 	gist.key = 'val';
+	// 	const updatedGist = await Gist.update(gist);
+	// 	t.is(updatedGist.key, 'val');
+	// });
+
 	test('can update description', async (t)=>{
-		const updatedGist = await Gist.update(testGistId, {}, {description : 'new description'});
-		t.is(updatedGist[Gist.description], 'new description');
+		const updatedGist = await Gist.update(testGistId, {}, {desc : 'new description'});
+		t.is(updatedGist[Gist.desc], 'new description');
 	});
 
 	test('cleanup test gist', async (t)=>ResetTestGist());
@@ -86,13 +97,13 @@ test.group('create & remove', (test)=>{
 			content : 'hello'
 		}, {
 			public : false,
-			description : 'test',
+			desc : 'test',
 			fields : { content : 'md' }
 		});
 
 		t.is(newGist.content, 'hello');
 		t.is(newGist.meta, {a:true});
-		t.is(newGist[Gist.description], 'test');
+		t.is(newGist[Gist.desc], 'test');
 	});
 	test('remove', async (t)=>{
 		t.arm();
@@ -103,6 +114,26 @@ test.group('create & remove', (test)=>{
 	});
 });
 
+test('append', async (t)=>{
+	const gist = await Gist.append(testGistId, {
+		post : '!',
+		meta : {
+			append : true
+		},
+		table: [{key:'d', val:8}]
+	});
+
+	t.is(gist.post, '# Hello World!');
+
+	t.is(gist.meta.append, true);
+	t.is(gist.meta.title, 'hello world.');
+
+	t.is(gist.table[3].key, 'd');
+	t.is(gist.table[3].val, '8');
+});
+
+
+test('reset test gist', async (t)=>ResetTestGist());
 
 
 module.exports = test;

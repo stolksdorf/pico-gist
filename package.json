@@ -15,7 +15,7 @@
     "test:dev": "pico-check -w -b"
   },
   "pico-check": {
-    "timeout": 2000
+    "timeout": 8000
   },
   "repository": {
     "type": "git",

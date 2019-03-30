@@ -4,9 +4,7 @@ const config = require('./config');
 const Gist = require('../pico-gist.js')(config.get('gist_token'));
 
 const types = require('../types.js');
-
-//const testGistId = config.get('test_gist_id');
-const sampleGist = require('./sample.gist.js');
+const defaultGist = require('./default.gist.json');
 
 
 
@@ -46,19 +44,24 @@ test.group('mergeOptions', (test)=>{
 
 test.group('gist2Object', (test)=>{
 	test('basic', (t)=>{
-		const obj = Gist.utils.gist2Object(sampleGist, types);
+		const obj = Gist.utils.gist2Object(defaultGist, types);
 
 		t.type(obj.table, 'array');
-		t.is(obj.table[0].val, 'a');
-		t.is(obj.table[0].key, '6');
+		t.is(obj.table[0].key, 'a');
+		t.is(obj.table[0].val, '5');
+		t.is(obj.table[1].key, 'b');
+		t.is(obj.table[1].val, '6');
+		t.is(obj.table[2].key, 'c');
+		t.is(obj.table[2].val, '7');
 
 		t.type(obj.meta, 'object');
-		t.is(obj.meta.a, true);
+		t.is(obj.meta.shared, true);
+		t.is(obj.meta.title, 'hello world.');
 
-		t.is(obj.hello_world, 'Hello world!');
+		t.is(obj.post, '# Hello World');
 
-		t.is(obj[Gist.id], sampleGist.id);
-		t.is(obj[Gist.description], sampleGist.description);
+		t.is(obj[Gist.id], defaultGist.id);
+		t.is(obj[Gist.desc], defaultGist.description);
 	});
 });
 
@@ -82,6 +85,42 @@ test.group('object2Files', (test)=>{
 		t.is(files['text.md'], { content: 'yo'});
 	});
 });
+
+/*
+test.only().group('getArgs', (test)=>{
+	test('basic', (t)=>{
+		const {id, obj, opts} = Gist.utils.getArgs('abc123', {key:'val'});
+		t.is(id, 'abc123');
+		t.is(obj, {key:'val'});
+		t.is(opts.public, true);
+	});
+	test('gist only', (t)=>{
+		let pseudoGist = {key :'val'};
+		pseudoGist[Gist.id] = 'abc123';
+		const {id, obj, opts} = Gist.utils.getArgs(pseudoGist);
+
+		t.is(id, 'abc123');
+		t.is(obj, {key:'val'});
+		t.is(opts.public, true);
+	});
+	test('basic with opts', (t)=>{
+		const {id, obj, opts} = Gist.utils.getArgs('abc123', {key:'val'}, {flag : true});
+		t.is(id, 'abc123');
+		t.is(obj, {key:'val'});
+		t.is(opts.public, true);
+		t.is(opts.flag, true);
+	});
+	test('gist only with opts', (t)=>{
+		let pseudoGist = {key :'val'};
+		pseudoGist[Gist.id] = 'abc123';
+		const {id, obj, opts} = Gist.utils.getArgs(pseudoGist, {flag : true});
+		t.is(id, 'abc123');
+		t.is(obj, {key:'val'});
+		t.is(opts.public, true);
+		t.is(opts.flag, true);
+	});
+})
+*/
 
 
 

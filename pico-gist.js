@@ -8,7 +8,7 @@ const DefaultOptions = {
 	types,
 	fields      : {},
 	public      : true,
-	description : undefined,
+	desc : undefined,
 };
 
 module.exports = (token, baseOptions)=>{
@@ -29,6 +29,10 @@ module.exports = (token, baseOptions)=>{
 			return fields[name] || utils.autofields[name]
 				|| (typeof value === 'object' ? 'json' : 'txt');
 		},
+		// getArgs : (a,b,c)=>{
+		// 	if(a[Gist.id]) return { id:a[Gist.id], obj:a, opts:getOpts(b) };
+		// 	return { id:a, obj:b, opts:getOpts(c) };
+		// },
 		gist2Object : (gist, types={})=>{
 			const obj = Object.values(gist.files).reduce((acc, file)=>{
 				//FIXME: if(file.truncated){}
@@ -40,7 +44,7 @@ module.exports = (token, baseOptions)=>{
 				return acc;
 			}, {});
 			obj[Gist.id] = gist.id;
-			obj[Gist.description] = gist.description;
+			obj[Gist.desc] = gist.description;
 			return obj;
 		},
 		object2Files : (obj, fields={}, types={})=>{
@@ -56,13 +60,13 @@ module.exports = (token, baseOptions)=>{
 	};
 
 	const Gist = {
-		id          : Symbol(),
-		description : Symbol(),
+		id   : Symbol(),
+		desc : Symbol(),
 		utils,
 		opts : utils.mergeOptions(DefaultOptions, baseOptions),
 
 		getId : (val)=>val[Gist.id] || val,
-		getDescription : (val)=>val[Gist.description] || val,
+		getDescription : (val)=>val[Gist.desc] || val,
 
 		request : async (verb, path, data={})=>{
 			return request
@@ -77,42 +81,48 @@ module.exports = (token, baseOptions)=>{
 			return Gist.request('get', username ? `/users/${username}/gists` : '/gists')
 				.then((gists)=>gists.map((gist)=>{
 					const {id, description} = gist;
-					return {id, description};
+					return {id, desc: description};
 				}))
 		},
 		get : async (id, _opts)=>{
 			const opts = getOpts(_opts);
 			return Gist.request('get', `/gists/${Gist.getId(id)}`)
-				.then((gist)=>Gist.utils.gist2Object(gist, opts.types));
+				.then((gist)=>utils.gist2Object(gist, opts.types));
 		},
 		create : async (obj, _opts)=>{
 			const opts = getOpts(_opts);
 			return Gist.request('post', `/gists`, {
-					public : opts.public,
-					description : opts.description,
-					files       : Gist.utils.object2Files(obj, opts.fields, opts.types)
+					public      : opts.public,
+					description : opts.desc,
+					files       : utils.object2Files(obj, opts.fields, opts.types)
 				})
-				.then((gist)=>Gist.utils.gist2Object(gist, opts.types));
-		},
-		update : async (id, obj, _opts)=>{
-			const opts = getOpts(_opts);
-			return Gist.request('patch', `/gists/${Gist.getId(id)}`, {
-					description : opts.description,
-					files       : Gist.utils.object2Files(obj, opts.fields, opts.types)
-				})
-				.then((gist)=>Gist.utils.gist2Object(gist, opts.types));
+				.then((gist)=>utils.gist2Object(gist, opts.types));
 		},
 		remove : async (id)=>{
 			return Gist.request('delete', `/gists/${Gist.getId(id)}`)
 		},
-		append : async (id, obj)=>{
-			let currValue = await Gist.get(id);
-			map(obj, (val, key)=>{
-				currValue[key] = (typeof currValue[key] === 'object')
-					? Object.assign(currValue[key], val)
-					: currValue[key] + val;
-			});
-			return await Gist.update(id, currValue);
+		update : async (id, obj, _opts)=>{
+			const opts = getOpts(_opts);
+			return Gist.request('patch', `/gists/${Gist.getId(id)}`, {
+					description : opts.desc,
+					files       : utils.object2Files(obj, opts.fields, opts.types)
+				})
+				.then((gist)=>utils.gist2Object(gist, opts.types));
+		},
+		append : async (id, obj, _opts)=>{
+			const opts = getOpts(_opts);
+			const merge = (a, b)=>{
+				if(Array.isArray(a)) return a.concat(b);
+				if(typeof a === 'object') return Object.assign(a, b);
+				return a + b;
+			};
+			const gist = await Gist.get(id, opts);
+			return await Gist.update(id,
+				reduce(obj, (acc, val, key)=>{
+					acc[key] = merge(gist[key], val);
+					return acc;
+				}, {})
+			);
 		}
 	};
 	return Gist;
