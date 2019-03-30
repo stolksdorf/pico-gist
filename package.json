@@ -1,8 +1,8 @@
 {
   "name": "pico-gist",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "An incredibly tiny library for using github gists as a datastore",
-  "main": "pico-gist.js",
+  "main": "src/pico-gist.js",
   "dependencies": {
     "superagent": "^4.1.0"
   },
@@ -12,7 +12,8 @@
   },
   "scripts": {
     "test": "pico-check",
-    "test:dev": "pico-check -w -b"
+    "test:dev": "pico-check -w -b",
+    "test:utils": "pico-check -w -b tests/utils.test.js"
   },
   "pico-check": {
     "timeout": 8000

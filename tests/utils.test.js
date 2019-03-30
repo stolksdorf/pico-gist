@@ -1,12 +1,10 @@
 const test = require('pico-check');
 const config = require('./config');
 
-const Gist = require('../pico-gist.js')(config.get('gist_token'));
+const Gist = require('../src/pico-gist.js')(config.get('gist_token'));
+const types = require('../src/base.types.js');
 
-const types = require('../types.js');
 const defaultGist = require('./default.gist.json');
-
-
 
 test.group('mergeOptions', (test)=>{
 	test('core options are merged', (t)=>{
@@ -17,7 +15,7 @@ test.group('mergeOptions', (test)=>{
 		t.is(res.a, 6);
 		t.is(res.b, 5);
 		t.is(res.c, 7);
-	})
+	});
 
 
 	test('types are merged', (t)=>{
@@ -65,66 +63,34 @@ test.group('gist2Object', (test)=>{
 	});
 });
 
-
-test.group('object2Files', (test)=>{
-	test('basic', (t)=>{
-		const files = Gist.utils.object2Files({
+test.group('object2Gist', (test)=>{
+	test('extra types work', (t)=>{
+		const gist = Gist.utils.object2Gist({
 			text : 'yo',
 			meta : { a : true }
-		}, {}, types);
+		}, {types});
 
-		t.is(files['text.txt'], { content: 'yo'});
-		t.is(files['meta.json'], { content: '{\n  "a": true\n}'});
+		t.is(gist.files['text.txt'], { content: 'yo'});
+		t.is(gist.files['meta.json'], { content: '{\n  "a": true\n}'});
 	});
 
 	test('custom fields work', (t)=>{
-		const files = Gist.utils.object2Files({
-			text : 'yo'
-		}, {text : 'md'});
+		const gist = Gist.utils.object2Gist({
+			markdown : 'yo'
+		}, {fields: {markdown : 'md'}});
 
-		t.is(files['text.md'], { content: 'yo'});
+		t.is(gist.files['markdown.md'], { content: 'yo'});
+	});
+
+	test('public flag and description work', (t)=>{
+		const gist = Gist.utils.object2Gist({
+			text : 'yo',
+		}, {public: false, desc: 'test'});
+
+		t.is(gist.public, false);
+		t.is(gist.description, 'test');
 	});
 });
-
-/*
-test.only().group('getArgs', (test)=>{
-	test('basic', (t)=>{
-		const {id, obj, opts} = Gist.utils.getArgs('abc123', {key:'val'});
-		t.is(id, 'abc123');
-		t.is(obj, {key:'val'});
-		t.is(opts.public, true);
-	});
-	test('gist only', (t)=>{
-		let pseudoGist = {key :'val'};
-		pseudoGist[Gist.id] = 'abc123';
-		const {id, obj, opts} = Gist.utils.getArgs(pseudoGist);
-
-		t.is(id, 'abc123');
-		t.is(obj, {key:'val'});
-		t.is(opts.public, true);
-	});
-	test('basic with opts', (t)=>{
-		const {id, obj, opts} = Gist.utils.getArgs('abc123', {key:'val'}, {flag : true});
-		t.is(id, 'abc123');
-		t.is(obj, {key:'val'});
-		t.is(opts.public, true);
-		t.is(opts.flag, true);
-	});
-	test('gist only with opts', (t)=>{
-		let pseudoGist = {key :'val'};
-		pseudoGist[Gist.id] = 'abc123';
-		const {id, obj, opts} = Gist.utils.getArgs(pseudoGist, {flag : true});
-		t.is(id, 'abc123');
-		t.is(obj, {key:'val'});
-		t.is(opts.public, true);
-		t.is(opts.flag, true);
-	});
-})
-*/
-
-
-
-
 
 
 module.exports = test;

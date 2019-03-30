@@ -4,7 +4,7 @@ const config = require('./config');
 const testGistId = config.get('test_gist_id');
 const defaultGist = require('./default.gist.json');
 
-const Gist = require('../pico-gist.js')(config.get('gist_token'));
+const Gist = require('../src/pico-gist.js')(config.get('gist_token'));
 
 const ResetTestGist = async ()=>{
 	const rawGist = await Gist.request('get', `/gists/${testGistId}`);
