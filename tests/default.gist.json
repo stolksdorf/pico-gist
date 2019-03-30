@@ -1,0 +1,18 @@
+{
+	"id": "4c418059103b81ea893e5fe103f6c7c0",
+	"description": "[pico-gist] Testing Gist",
+	"files" : {
+		"table.csv":{
+			"filename": "table.csv",
+			"content": "key,val\na,5\nb,6\nc,7"
+		},
+		"post.md":{
+			"filename": "post.md",
+			"content": "# Hello World"
+		},
+		"meta.json":{
+			"filename": "meta.json",
+			"content" : "{\n  \"title\": \"hello world.\",\n  \"shared\": true\n}"
+		}
+	}
+}
