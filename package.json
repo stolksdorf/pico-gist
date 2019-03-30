@@ -1,8 +1,8 @@
 {
   "name": "pico-gist",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "An incredibly tiny library for using github gists as a datastore",
-  "main": "index.js",
+  "main": "pico-gist.js",
   "dependencies": {
     "superagent": "^4.1.0"
   },

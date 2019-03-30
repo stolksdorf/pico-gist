@@ -22,22 +22,10 @@ const xsv = (delimiter)=>{
 }
 
 module.exports = {
-	tsv: xsv('\t'),
-	csv: xsv(','),
+	tsv : xsv('\t'),
+	csv : xsv(','),
 	json: {
 		from : (str)=>JSON.parse(str),
 		to   : (data)=>JSON.stringify(data, null, '  ')
 	},
-	// txt : {
-	// 	to   : (str)=>str,
-	// 	from : (data)=>data
-	// },
-
-
-
-	// //TODO: bump to the examples
-	// yaml: {
-	// 	to   : (str)=>require('js-yaml').safeDump(str),
-	// 	from : (data)=>require('js-yaml').safeLoad(data)
-	// },
 }
